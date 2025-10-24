@@ -9,7 +9,7 @@
   },
   "peerDependencies": {
     "typescript": "^5",
-    "frame-master": "https://github.com/shpaw415/frame-master.git#0ce1ad1"
+    "frame-master": "https://github.com/shpaw415/frame-master.git#644c754"
   },
   "exports": {
     "./types": "./src/types.ts",
