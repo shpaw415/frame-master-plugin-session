@@ -15,6 +15,7 @@
     "./types": "./src/types.ts",
     "./react/hooks": "./src/react/hooks.ts",
     "./react/providers": "./src/react/providers.tsx",
+    "./react/*": "./src/react/*",
     "./plugin": "./index.ts"
   }
 }

@@ -6,6 +6,8 @@ type sessionContextType = {
   session: SessionType["public"];
   /** method to delete the current session true if success false otherwise */
   delete: () => Promise<boolean>;
+  /** revalidate session data */
+  revalidate: () => Promise<void>;
 };
 
 export const SessionContext = createContext<

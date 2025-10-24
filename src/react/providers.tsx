@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { SessionContext } from "./contexts";
 import type { SessionType } from "../types";
 import type { masterRequest } from "frame-master/server/request";
-import { deleteSession as deleteSessionAPI } from "../api";
+import { deleteSession as deleteSessionAPI, getSession } from "../api";
 /**
  * Wrap your application with this provider to make session data available via context.
  * @example
@@ -43,9 +43,19 @@ export function SessionProvider({
       return true;
     } else return false;
   }, []);
+
+  const revalidate = useCallback(async () => {
+    const newSession = await getSession();
+    setSession(newSession || undefined);
+  }, []);
+
   return (
     <SessionContext.Provider
-      value={session ? { session: session, delete: deleteSession } : undefined}
+      value={
+        session
+          ? { session: session, delete: deleteSession, revalidate }
+          : undefined
+      }
     >
       {children}
     </SessionContext.Provider>
