@@ -4,8 +4,8 @@
  * @example
  * ```ts
  * // In your project
- * declare module "frame-master-plugin-session/react/types" {
- *   interface SessionType {
+ * declare module "frame-master-plugin-session/types" {
+ *   interface PublicSessionType {
  *     user: {
  *       id: string;
  *       name: string;
@@ -15,7 +15,16 @@
  *     token: string;
  *     expiresAt: Date;
  *   }
+ * interface PrivateSessionType {
+ *     apiKey: string;
+ *     secret: string;
+ *   }
  * }
  * ```
  */
-export interface SessionType {}
+export type SessionType = {
+  public: PublicSessionType;
+  private: PrivateSessionType & PublicSessionType;
+};
+export interface PublicSessionType {}
+export interface PrivateSessionType {}

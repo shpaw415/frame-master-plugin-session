@@ -17,6 +17,7 @@ export type SessionPluginProps = {
 
 export type SessionPluginRequestContext = {
   __SESSION__: SessionType | undefined;
+  __SESSION_CHANGED__: boolean;
 };
 
 const DEFAULT_PROPS: Partial<SessionPluginProps> = {
@@ -24,9 +25,50 @@ const DEFAULT_PROPS: Partial<SessionPluginProps> = {
   expiresIn: 60 * 60 * 24, // 1 day
 };
 
+const COOKIE_NAME = "session_id";
+
 /**
- * Session management plugin
+ * Base session type that can be extended by users via module augmentation.
  *
+ * @example
+ * ```ts
+ * // In your project
+ * declare module "frame-master-plugin-session/types" {
+ *   interface PublicSessionType {
+ *     user: {
+ *       id: string;
+ *       name: string;
+ *       email: string;
+ *       role: "admin" | "user";
+ *     };
+ *     token: string;
+ *     expiresAt: Date;
+ *   }
+ * interface PrivateSessionType {
+ *     apiKey: string;
+ *     secret: string;
+ *   }
+ * }
+ * ```
+ *
+ *  * Wrap your application with this provider to make session data available via context.
+ * @example
+ * ```tsx
+ * import ReactSSRShell from "frame-master-plugin-react-ssr/shell";
+ * import type { masterRequest } from "frame-master/server/request";
+ * import { SessionProvider } from "frame-master-plugin-session/react/providers";
+ * import type { JSX } from "react";
+ *
+ * function Shell({ request, children }: { request: masterRequest | null, children: JSX.Element }) {
+ *   return (
+ *     <SessionProvider request={request}>
+ *      <ReactSSRShell request={request}>
+ *        {children}
+ *      </ReactSSRShell>
+ *     </SessionProvider>
+ *   );
+ * }
+ * ```
  * */
 export default function createPlugin(
   props: SessionPluginProps
@@ -41,6 +83,15 @@ export default function createPlugin(
           "frame-master-plugin-react-ssr": "^1.0.0",
         }),
       },
+      bunVersion: "^1.0.0",
+    },
+    serverConfig: {
+      routes: {
+        "/session_plugin/session/delete": async (req) => {
+          req.cookies.delete(COOKIE_NAME);
+          return new Response("Session deleted", { status: 200 });
+        },
+      },
     },
     router: {
       before_request(master) {
@@ -48,11 +99,34 @@ export default function createPlugin(
           typeof props.strategy extends "cookie"
             ? Record<"id", string>
             : Record<"data", SessionType | undefined>
-        >("session_id", true);
+        >(COOKIE_NAME, true);
         if (props.strategy == "cookie") {
           if (master.isAskingHTML)
             master.setGlobalValues({ __SESSION__: cookie?.data });
-          master.setContext({ __SESSION__: cookie?.data });
+          master.setContext<SessionPluginRequestContext>({
+            __SESSION__: cookie?.data,
+            __SESSION_CHANGED__: false,
+          });
+        }
+      },
+      after_request(master) {
+        if (props.strategy == "cookie") {
+          const context = master.getContext<SessionPluginRequestContext>();
+          if (context.__SESSION_CHANGED__) {
+            if (context.__SESSION__ === undefined) {
+              master.deleteCookie(COOKIE_NAME);
+              return;
+            } else
+              master.setCookie(
+                COOKIE_NAME,
+                { data: context.__SESSION__.public },
+                {
+                  maxAge: props.expiresIn,
+                  httpOnly: true,
+                  encrypted: true,
+                }
+              );
+          }
         }
       },
     },
