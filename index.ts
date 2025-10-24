@@ -1,6 +1,7 @@
 import type { FrameMasterPlugin } from "frame-master/plugin";
 import packageJson from "./package.json";
 import type { SessionType } from "./src/types";
+import { masterRequest } from "frame-master/server/request";
 
 declare global {
   var __SESSION__: SessionType | undefined;
@@ -58,6 +59,7 @@ const COOKIE_NAME = "session_id";
  * import type { masterRequest } from "frame-master/server/request";
  * import { SessionProvider } from "frame-master-plugin-session/react/providers";
  * import type { JSX } from "react";
+import { RequestContext } from '../react-ssr/src/hooks/contexts';
  *
  * function Shell({ request, children }: { request: masterRequest | null, children: JSX.Element }) {
  *   return (
@@ -85,14 +87,6 @@ export default function createPlugin(
       },
       bunVersion: "^1.0.0",
     },
-    serverConfig: {
-      routes: {
-        "/session_plugin/session/delete": async (req) => {
-          req.cookies.delete(COOKIE_NAME);
-          return new Response("Session deleted", { status: 200 });
-        },
-      },
-    },
     router: {
       before_request(master) {
         const cookie = master.getCookie<
@@ -109,6 +103,32 @@ export default function createPlugin(
           });
         }
       },
+      request: (master) =>
+        onRoute(master, {
+          "/session_plugin/session": {
+            GET: (master) => {
+              if (props.strategy !== "cookie")
+                master
+                  .setResponse(
+                    JSON.stringify(
+                      master.getContext<SessionPluginRequestContext>()
+                        .__SESSION__?.public || null
+                    ),
+                    { status: 200 }
+                  )
+                  .preventGlobalValuesInjection()
+                  .preventRewrite()
+                  .sendNow();
+            },
+            DELETE: (req) =>
+              req
+                .deleteCookie(COOKIE_NAME)
+                .setResponse("Session deleted", { status: 200 })
+                .preventGlobalValuesInjection()
+                .preventRewrite()
+                .sendNow(),
+          },
+        }),
       after_request(master) {
         if (props.strategy == "cookie") {
           const context = master.getContext<SessionPluginRequestContext>();
@@ -131,4 +151,22 @@ export default function createPlugin(
       },
     },
   };
+}
+type RouteCallback = (master: masterRequest) => void | Promise<void>;
+type MethodKeys = "POST" | "GET" | "DELETE";
+
+function onRoute(
+  master: masterRequest,
+  routes: Record<
+    string,
+    RouteCallback | Partial<Record<MethodKeys, RouteCallback>>
+  >
+) {
+  const currentRoute = routes[master.URL.pathname];
+
+  if (typeof currentRoute == "function") {
+    return currentRoute(master);
+  } else if (currentRoute) {
+    return currentRoute[master.request.method as MethodKeys]?.(master);
+  }
 }
