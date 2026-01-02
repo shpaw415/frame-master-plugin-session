@@ -5,24 +5,21 @@ import type { Data as _Data } from "./types";
 export default {
   setSessionData<Data extends _Data<any, any>>(
     master: masterRequest,
-    data: Omit<Data, "meta"> & { meta?: Partial<Data["meta"]> }
+    data: Omit<Partial<Data>, "meta"> & { meta?: Partial<Data["meta"]> }
   ) {
     const current_data =
       master.getContext<SessionPluginContext>()?.session ||
-      ({
-        client: {},
-        server: {},
-      } as Data);
+      ({} as Partial<Data>);
 
     const new_data: Data = {
-      client: { ...current_data.client, ...data.client },
-      server: { ...current_data.server, ...data.server },
+      client: { ...current_data?.client, ...data.client },
+      server: { ...current_data?.server, ...data.server },
       meta: {
         updatedAt: Date.now(),
-        createdAt: current_data.meta.createdAt || Date.now(),
+        createdAt: current_data?.meta?.createdAt || Date.now(),
         expiresAt:
-          data.meta?.expiresAt ||
-          current_data.meta.expiresAt ||
+          data?.meta?.expiresAt ||
+          current_data?.meta?.expiresAt ||
           Date.now() + 1000 * 60 * 60 * 24,
       },
     } as Data;
