@@ -7,7 +7,13 @@ export default {
     master: masterRequest,
     data: Omit<Data, "meta"> & { meta?: Partial<Data["meta"]> }
   ) {
-    const current_data = master.getContext<SessionPluginContext>().session;
+    const current_data =
+      master.getContext<SessionPluginContext>()?.session ||
+      ({
+        client: {},
+        server: {},
+      } as Data);
+
     const new_data: Data = {
       client: { ...current_data.client, ...data.client },
       server: { ...current_data.server, ...data.server },
