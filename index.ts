@@ -106,7 +106,7 @@ export default function reactSessionPlugin<
         )
           return;
         const { server, ...data } =
-          master.getContext<SessionPluginContext<Data>>().session;
+          master.getContext<SessionPluginContext<Data>>()?.session ?? {};
 
         master.setResponse(data ? JSON.stringify(data) : "null", {
           headers: { "Content-Type": "application/json" },
