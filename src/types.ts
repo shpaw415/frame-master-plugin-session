@@ -1,6 +1,6 @@
-export interface Data {
-  client?: unknown;
-  server?: unknown;
+export interface Data<TClient = unknown, TServer = unknown> {
+  client?: TClient;
+  server?: TServer;
   meta: {
     updatedAt: number;
     createdAt: number;
