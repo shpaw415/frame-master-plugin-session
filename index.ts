@@ -116,7 +116,7 @@ export default function reactSessionPlugin(
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 expiresAt:
-                  Date.now() + (cookieOptions.maxAge ?? 60 * 60 * 24) * 1000,
+                  (Date.now() + (cookieOptions.maxAge ?? 60 * 60 * 24)) * 1000,
               })
             ),
             session_activity: { updated: false, deleted: false },
