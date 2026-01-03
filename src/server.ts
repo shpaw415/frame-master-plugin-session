@@ -1,6 +1,5 @@
 import type { masterRequest } from "frame-master/server/request";
 import type { SessionPluginContext } from "..";
-import type { Data } from "./types";
 
 export default {
   setSessionData(

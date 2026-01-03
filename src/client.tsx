@@ -7,7 +7,7 @@ import {
   type Context,
   type ReactNode,
 } from "react";
-import { SESSION_DATA_ENDPOINT, type Data } from "./types";
+import { SESSION_DATA_ENDPOINT } from "./types";
 
 export type SessionManagerOptions = {
   data?: Data;

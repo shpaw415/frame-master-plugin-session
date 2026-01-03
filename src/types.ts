@@ -1,13 +1,3 @@
-export interface Data<TClient = unknown, TServer = unknown> {
-  client?: TClient;
-  server?: TServer;
-  meta: {
-    updatedAt: number;
-    createdAt: number;
-    expiresAt: number;
-  };
-}
-
 export const SESSION_DATA_ENDPOINT = "/__session_data__";
 export const SESSION_COOKIE_NAME = "fm_session_id";
 
