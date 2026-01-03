@@ -1,9 +1,10 @@
-import type { masterRequest } from "frame-master/server/request";
 import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
+  type Context,
   type ReactNode,
 } from "react";
 import { SESSION_DATA_ENDPOINT, type Data as _Data } from "./types";
@@ -28,6 +29,7 @@ class SessionManager<
   private clientSessionData: Data["client"] | null = null;
   private serverSessionData: Data["server"] | null = null;
   public metaData: _Data<any, any>["meta"] | null = null;
+  private onChangeCallbacks: Map<string, () => void> = new Map();
 
   private isInited: boolean = false;
 
@@ -39,12 +41,16 @@ class SessionManager<
     }
   }
 
-  private _ensureInit() {
-    if (this.isInited) return;
-    throw new Error(
-      "SessionManager not initialized. Call init() before using."
-    );
+  addOnChangeCallback(callback: () => void) {
+    const id = crypto.randomUUID();
+    this.onChangeCallbacks.set(id, callback);
+    return id;
   }
+
+  removeOnChangeCallback(id: string) {
+    this.onChangeCallbacks.delete(id);
+  }
+
   /**
    * Gets the combined session data from both client and server.
    *
@@ -56,6 +62,9 @@ class SessionManager<
       server: this.serverSessionData,
     } as Data;
   }
+  getMetaData() {
+    return this.metaData;
+  }
   async init() {
     if (this.isInited) return;
     const res = await fetch(SESSION_DATA_ENDPOINT);
@@ -65,6 +74,7 @@ class SessionManager<
       this.metaData = data.meta;
     }
     this.isInited = true;
+    this.onChangeCallbacks.forEach((cb) => cb());
   }
   /**
    * Resets the session manager, forcing a re-initialization.
@@ -82,25 +92,61 @@ export type SessionProviderProps = {
   children?: ReactNode;
 };
 
-const SessionContext = createContext<SessionManager | null>(null);
+declare global {
+  var __SESSION_CONTEXT__: Context<SessionManager<{
+    client: any;
+    server: any;
+    meta: any;
+  }> | null>;
+}
+
+globalThis.__SESSION_CONTEXT__ ??= createContext<SessionManager | null>(null);
 
 export function SessionProvider({ children }: SessionProviderProps) {
   const [sessionManager, setSessionManager] = useState(new SessionManager());
-  const [init, setInit] = useState(false);
   useEffect(() => {
-    sessionManager.init().then(() => setInit(true));
+    sessionManager.init();
   }, []);
   return (
-    <SessionContext.Provider value={sessionManager}>
+    <globalThis.__SESSION_CONTEXT__.Provider value={sessionManager}>
       {children}
-    </SessionContext.Provider>
+    </globalThis.__SESSION_CONTEXT__.Provider>
   );
 }
 
-export function useSession() {
-  const context = useContext(SessionContext);
+export function useEnsureContext() {
+  const context = useContext(globalThis.__SESSION_CONTEXT__);
   if (!context) {
     throw new Error("useSession must be used within a SessionProvider");
   }
   return context;
+}
+
+export function useRerenderOnSessionChange() {
+  const context = useContext(globalThis.__SESSION_CONTEXT__);
+  const [signal, setSignal] = useState(0);
+  useEnsureContext();
+  const id =
+    typeof window !== "undefined"
+      ? useMemo(
+          () => context!.addOnChangeCallback(() => setSignal((s) => s + 1)),
+          []
+        )
+      : null;
+  useEffect(() => {
+    return () => {
+      if (id) {
+        context!.removeOnChangeCallback(id);
+      }
+    };
+  }, [id, context]);
+
+  return signal;
+}
+
+export function useSession() {
+  const context = useContext(globalThis.__SESSION_CONTEXT__);
+  useRerenderOnSessionChange();
+  useEnsureContext();
+  return context!;
 }
