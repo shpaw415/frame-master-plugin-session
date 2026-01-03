@@ -18,7 +18,7 @@ export type SessionPluginOptions = {
         init: (
           req: masterRequest,
           id: string,
-          meta: globalThis.SessionData["meta"]
+          meta: () => globalThis.SessionData["meta"]
         ) => globalThis.SessionData | Promise<globalThis.SessionData>;
         /**
          * triggered when new session data is created or existing session data is updated.
@@ -97,16 +97,20 @@ export default function reactSessionPlugin(
           Record<"meta" | "client" | "server", unknown> | { id: string }
         >(SESSION_COOKIE_NAME, true);
 
-        if (typeof sessionType === "object") {
+        if (
+          typeof sessionType === "object" &&
+          (cookie as { id?: string } | undefined)?.id
+        ) {
           master.setContext<SessionPluginContext>({
             session: await sessionType.init(
               master,
               (cookie as { id: string }).id,
-              {
+              () => ({
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
-                expiresAt: Date.now() + 1000 * 60 * 60 * 24,
-              }
+                expiresAt:
+                  Date.now() + (cookieOptions.maxAge ?? 60 * 60 * 24) * 1000,
+              })
             ),
             session_activity: { updated: false, deleted: false },
           });
