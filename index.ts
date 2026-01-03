@@ -68,6 +68,13 @@ export default function reactSessionPlugin(
     cookieOptions = {},
   } = options || {};
 
+  globalThis.__PLUGIN_SESSION_OPTIONS__ ??= {
+    ...options,
+    sessionType,
+    skipForRoutes,
+    cookieOptions,
+  };
+
   const sessionDB = new Map<string, globalThis.SessionData>();
   return {
     name,

@@ -1,4 +1,7 @@
+import type { SessionPluginOptions } from ".";
 declare global {
+  var __PLUGIN_SESSION_OPTIONS__: SessionPluginOptions;
+
   namespace globalThis {
     /**
      * Extend this interface to add custom client-side session data.

@@ -21,7 +21,10 @@ export default function SessionManager(master: masterRequest) {
           expiresAt:
             data?.meta?.expiresAt ||
             current_data?.meta?.expiresAt ||
-            Date.now() + 1000 * 60 * 60 * 24,
+            Date.now() +
+              (globalThis.__PLUGIN_SESSION_OPTIONS__.cookieOptions?.maxAge ??
+                60 * 60 * 24) *
+                1000,
         },
       } as globalThis.SessionData;
 
