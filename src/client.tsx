@@ -15,7 +15,6 @@ export type SessionManagerOptions<
     meta: any;
   }
 > = {
-  request?: masterRequest;
   data?: Data;
 };
 
@@ -30,25 +29,14 @@ class SessionManager<
   private serverSessionData: Data["server"] | null = null;
   public metaData: _Data<any, any>["meta"] | null = null;
 
-  private request: masterRequest | undefined = undefined;
   private isInited: boolean = false;
 
   constructor(options?: SessionManagerOptions<Data>) {
-    this.request = options?.request;
-
-    if (
-      globalThis.__SESSION_PLUGIN_SERVER_REQUEST_WARNING__ !== false &&
-      !this.request &&
-      typeof window === "undefined"
-    ) {
-      console.warn(
-        "[frame-master-plugin-react-session] Warning: SessionManager initialized without a server request. Make sure to provide the request object when using server-side rendering to avoid inconsistencies."
-      );
-    }
-
     if (options?.data) {
       this.clientSessionData = options.data.client;
       this.serverSessionData = options.data.server;
+      this.isInited = true;
+    } else if (typeof window === "undefined") {
       this.isInited = true;
     }
   }
