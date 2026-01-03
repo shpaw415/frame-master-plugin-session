@@ -44,6 +44,11 @@ export type SessionPluginOptions = {
    */
   skipForRoutes?: string[];
   cookieOptions?: Omit<CookieOptions, "encrypted">;
+  /**
+   * If true, updates the session expiration time on each activity.
+   * @default true
+   */
+  updateSessionExpirationOnActivity?: boolean;
 };
 
 export type SessionPluginContext = {
@@ -66,6 +71,7 @@ export default function reactSessionPlugin(
     sessionType = "cookie",
     skipForRoutes = [],
     cookieOptions = {},
+    updateSessionExpirationOnActivity = true,
   } = options || {};
 
   globalThis.__PLUGIN_SESSION_OPTIONS__ ??= {
@@ -73,6 +79,7 @@ export default function reactSessionPlugin(
     sessionType,
     skipForRoutes,
     cookieOptions,
+    updateSessionExpirationOnActivity,
   };
 
   const sessionDB = new Map<string, globalThis.SessionData>();

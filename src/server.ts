@@ -1,6 +1,19 @@
 import type { masterRequest } from "frame-master/server/request";
 import type { SessionPluginContext } from "..";
 
+function createExpirationDate(currentExpiration: number): number {
+  if (
+    !globalThis.__PLUGIN_SESSION_OPTIONS__.updateSessionExpirationOnActivity
+  ) {
+    return currentExpiration;
+  }
+  return (
+    Date.now() +
+    (globalThis.__PLUGIN_SESSION_OPTIONS__.cookieOptions?.maxAge ??
+      60 * 60 * 24) *
+      1000
+  );
+}
 export default function SessionManager(master: masterRequest) {
   return {
     setSessionData(
@@ -20,11 +33,9 @@ export default function SessionManager(master: masterRequest) {
           createdAt: current_data?.meta?.createdAt || Date.now(),
           expiresAt:
             data?.meta?.expiresAt ||
-            current_data?.meta?.expiresAt ||
-            Date.now() +
-              (globalThis.__PLUGIN_SESSION_OPTIONS__.cookieOptions?.maxAge ??
-                60 * 60 * 24) *
-                1000,
+            createExpirationDate(
+              current_data?.meta?.expiresAt || Date.now() + 60 * 60 * 24 * 1000
+            ),
         },
       } as globalThis.SessionData;
 
