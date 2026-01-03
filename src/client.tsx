@@ -7,33 +7,21 @@ import {
   type Context,
   type ReactNode,
 } from "react";
-import { SESSION_DATA_ENDPOINT, type Data as _Data } from "./types";
+import { SESSION_DATA_ENDPOINT, type Data } from "./types";
 
-export type SessionManagerOptions<
-  Data extends _Data<any, any> = {
-    client: any;
-    server: any;
-    meta: any;
-  }
-> = {
+export type SessionManagerOptions = {
   data?: Data;
 };
 
-class SessionManager<
-  Data extends _Data<any, any> = {
-    client: any;
-    server: any;
-    meta: any;
-  }
-> {
+class SessionManager {
   private clientSessionData: Data["client"] | null = null;
   private serverSessionData: Data["server"] | null = null;
-  public metaData: _Data<any, any>["meta"] | null = null;
+  public metaData: Data["meta"] | null = null;
   private onChangeCallbacks: Map<string, () => void> = new Map();
 
   private isInited: boolean = false;
 
-  constructor(options?: SessionManagerOptions<Data>) {
+  constructor(options?: SessionManagerOptions) {
     if (options?.data) {
       this.clientSessionData = options.data.client;
       this.serverSessionData = options.data.server;
@@ -98,11 +86,7 @@ export type SessionProviderProps = {
 };
 
 declare global {
-  var __SESSION_CONTEXT__: Context<SessionManager<{
-    client: any;
-    server: any;
-    meta: any;
-  }> | null>;
+  var __SESSION_CONTEXT__: Context<SessionManager | null>;
 }
 
 globalThis.__SESSION_CONTEXT__ ??= createContext<SessionManager | null>(null);

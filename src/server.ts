@@ -1,9 +1,9 @@
 import type { masterRequest } from "frame-master/server/request";
 import type { SessionPluginContext } from "..";
-import type { Data as _Data } from "./types";
+import type { Data } from "./types";
 
 export default {
-  setSessionData<Data extends _Data<any, any>>(
+  setSessionData(
     master: masterRequest,
     data: Omit<Partial<Data>, "meta"> & { meta?: Partial<Data["meta"]> }
   ) {
@@ -12,8 +12,8 @@ export default {
       ({} as Partial<Data>);
 
     const new_data: Data = {
-      client: { ...current_data?.client, ...data.client },
-      server: { ...current_data?.server, ...data.server },
+      client: { ...(current_data?.client || {}), ...(data.client || {}) },
+      server: { ...(current_data?.server || {}), ...(data.server || {}) },
       meta: {
         updatedAt: Date.now(),
         createdAt: current_data?.meta?.createdAt || Date.now(),
@@ -32,7 +32,7 @@ export default {
       },
     });
   },
-  getSessionData<Data extends _Data<any, any>>(master: masterRequest) {
+  getSessionData(master: masterRequest) {
     const current_data = master.getContext<SessionPluginContext>().session;
     return current_data as Data;
   },
