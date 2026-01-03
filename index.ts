@@ -113,6 +113,8 @@ export default function reactSessionPlugin<
         });
       },
       after_request(master) {
+        if (!master.isResponseSetted()) return;
+
         const { session, session_activity } =
           master.getContext<SessionPluginContext<Data>>();
         if (!session) return;
