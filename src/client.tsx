@@ -56,11 +56,16 @@ class SessionManager<
    *
    * @returns The combined session data.
    */
-  getData() {
+  getData(): {
+    client: null | Data["client"];
+    server: null | Data["server"];
+    meta: null | Data["meta"];
+  } {
     return {
       client: this.clientSessionData,
       server: this.serverSessionData,
-    } as Data;
+      meta: this.metaData,
+    };
   }
   getMetaData() {
     return this.metaData;
