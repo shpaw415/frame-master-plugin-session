@@ -167,6 +167,7 @@ export default function reactSessionPlugin(
         const cookieOpts: CookieOptions = {
           httpOnly: true,
           secure: isDev() ? false : true,
+          encrypted: true,
           ...cookieOptions,
           maxAge: session.meta.expiresAt - Date.now() || cookieOptions.maxAge,
         };
