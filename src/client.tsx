@@ -36,8 +36,6 @@ class SessionManager<
       this.clientSessionData = options.data.client;
       this.serverSessionData = options.data.server;
       this.isInited = true;
-    } else if (typeof window === "undefined") {
-      this.isInited = true;
     }
   }
 
@@ -53,7 +51,6 @@ class SessionManager<
    * @returns The combined session data.
    */
   getData() {
-    this._ensureInit();
     return {
       client: this.clientSessionData,
       server: this.serverSessionData,
