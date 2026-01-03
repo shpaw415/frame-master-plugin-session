@@ -2,11 +2,7 @@ import type { FrameMasterPlugin } from "frame-master/plugin/types";
 import { name, version } from "./package.json";
 import { isDev } from "frame-master/utils";
 import type { CookieOptions, masterRequest } from "frame-master/server/request";
-import {
-  SESSION_COOKIE_NAME,
-  SESSION_DATA_ENDPOINT,
-  type Data,
-} from "./src/types";
+import { SESSION_COOKIE_NAME, SESSION_DATA_ENDPOINT } from "./src/common";
 
 export type SessionPluginOptions = {
   sessionType:
@@ -18,7 +14,10 @@ export type SessionPluginOptions = {
          * @param id - The identifier of the session.
          * @returns The session data object.
          */
-        init: (req: masterRequest, id: string) => Data | Promise<Data>;
+        init: (
+          req: masterRequest,
+          id: string
+        ) => globalThis.SessionData | Promise<globalThis.SessionData>;
         /**
          * triggered when new session data is created or existing session data is updated.
          * @param id - The identifier of the session.
@@ -27,7 +26,7 @@ export type SessionPluginOptions = {
         onNewData: (
           req: masterRequest,
           id: string,
-          data: Data
+          data: globalThis.SessionData
         ) => void | Promise<void>;
         /**
          * triggered when session data is deleted. used for cleanup operations.
@@ -43,11 +42,10 @@ export type SessionPluginOptions = {
    */
   skipForRoutes?: string[];
   cookieOptions?: Omit<CookieOptions, "encrypted">;
-  disableServerRequestWarning?: boolean;
 };
 
 export type SessionPluginContext = {
-  session: Data;
+  session: globalThis.SessionData;
   session_activity: {
     updated: boolean;
     deleted: boolean;
@@ -66,13 +64,9 @@ export default function reactSessionPlugin(
     sessionType = "cookie",
     skipForRoutes = [],
     cookieOptions = {},
-    disableServerRequestWarning = false,
   } = options || {};
 
-  globalThis.__SESSION_PLUGIN_SERVER_REQUEST_WARNING__ =
-    disableServerRequestWarning;
-
-  const sessionDB = new Map<string, Data>();
+  const sessionDB = new Map<string, globalThis.SessionData>();
   return {
     name,
     version,
@@ -115,7 +109,7 @@ export default function reactSessionPlugin(
           switch (sessionType) {
             case "cookie":
               master.setContext<SessionPluginContext>({
-                session: cookie as unknown as Data,
+                session: cookie as unknown as globalThis.SessionData,
                 session_activity: { updated: false, deleted: false },
               });
               break;

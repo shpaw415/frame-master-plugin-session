@@ -1,3 +1,4 @@
+/// <reference path="../index.d.ts" />
 import {
   createContext,
   useContext,
@@ -7,24 +8,24 @@ import {
   type Context,
   type ReactNode,
 } from "react";
-import { SESSION_DATA_ENDPOINT } from "./types";
+import { SESSION_DATA_ENDPOINT } from "./common";
 
 export type SessionManagerOptions = {
-  data?: Data;
+  data?: globalThis.SessionData;
 };
 
 class SessionManager {
-  private clientSessionData: Data["client"] | null = null;
-  private serverSessionData: Data["server"] | null = null;
-  public metaData: Data["meta"] | null = null;
+  private clientSessionData: globalThis.SessionDataClient | null = null;
+  private serverSessionData: globalThis.SessionDataServer | null = null;
+  public metaData: globalThis.SessionData["meta"] | null = null;
   private onChangeCallbacks: Map<string, () => void> = new Map();
 
   private isInited: boolean = false;
 
   constructor(options?: SessionManagerOptions) {
     if (options?.data) {
-      this.clientSessionData = options.data.client;
-      this.serverSessionData = options.data.server;
+      this.clientSessionData = options.data.client ?? null;
+      this.serverSessionData = options.data.server ?? null;
       this.isInited = true;
     }
   }
@@ -45,9 +46,9 @@ class SessionManager {
    * @returns The combined session data.
    */
   getData(): {
-    client: null | Data["client"];
-    server: null | Data["server"];
-    meta: null | Data["meta"];
+    client: globalThis.SessionDataClient | null;
+    server: globalThis.SessionDataServer | null;
+    meta: globalThis.SessionData["meta"] | null;
   } {
     return {
       client: this.clientSessionData,
@@ -62,8 +63,8 @@ class SessionManager {
     if (this.isInited) return;
     const res = await fetch(SESSION_DATA_ENDPOINT);
     if (res.ok) {
-      const data = (await res.json()) as Omit<Data, "server">;
-      this.clientSessionData = data.client;
+      const data = (await res.json()) as Omit<globalThis.SessionData, "server">;
+      this.clientSessionData = data.client ?? null;
       this.metaData = data.meta;
     }
     this.isInited = true;
