@@ -1,7 +1,5 @@
-import type { Data as _Data } from "./src/types";
-
 declare global {
-  interface Data<TClient = unknown, TServer = unknown> {
+  interface SessionData<TClient = unknown, TServer = unknown> {
     client?: TClient;
     server?: TServer;
     meta: {
@@ -12,4 +10,4 @@ declare global {
   }
 }
 
-export type { Data };
+export type { SessionData };
