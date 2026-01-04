@@ -70,6 +70,24 @@ export type SessionPluginContext = {
   };
 };
 
+function patternTest(pathname: string, patterns: string[]): boolean {
+  return patterns.some((pattern) => {
+    if (pattern == pathname) return true;
+    else if (pattern.endsWith("**")) {
+      const base = pattern.slice(0, -2);
+      if (pathname.startsWith(base)) return true;
+    } else if (pattern.endsWith("*")) {
+      const base = pattern.slice(0, -1);
+      if (
+        pathname.startsWith(base) &&
+        !pathname.slice(base.length).includes("/")
+      )
+        return true;
+    }
+    return false;
+  });
+}
+
 /**
  * frame-master-plugin-react-session - Frame-Master Plugin
  *
@@ -114,17 +132,11 @@ export default function reactSessionPlugin(
 
     router: {
       async before_request(master) {
-        const pattern = new URLPattern({ pathname: master.URL.pathname });
         if (SESSION_DATA_ENDPOINT === master.URL.pathname) "OK";
-        else if (
-          skipForRoutes.some((route) => pattern.test({ pathname: route }))
-        )
-          return;
+        else if (patternTest(master.URL.pathname, skipForRoutes)) return;
         else if (
           options?.enableForRoutes &&
-          !options?.enableForRoutes?.some((route) =>
-            pattern.test({ pathname: route })
-          )
+          !patternTest(master.URL.pathname, options.enableForRoutes)
         )
           return;
 

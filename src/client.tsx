@@ -80,7 +80,7 @@ class SessionManager {
       const expiresIn = this.metaData.expiresAt - Date.now();
       this.expirationTimeout = setTimeout(() => {
         this.reset();
-      }, expiresIn - 5000); // Reset 5 seconds before expiration
+      }, expiresIn - 10000); // Reset 10 seconds before expiration
     }
   }
   /**
