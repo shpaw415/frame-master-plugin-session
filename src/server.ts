@@ -16,6 +16,11 @@ function createExpirationDate(currentExpiration: number): number {
 }
 export default function SessionManager(master: masterRequest) {
   return {
+    /**
+     * Sets the session data for the current request.
+     *
+     * Merges the provided data with the existing session data.
+     */
     setSessionData(
       data: Omit<Partial<globalThis.SessionData>, "meta"> & {
         meta?: Partial<globalThis.SessionData["meta"]>;
@@ -47,10 +52,34 @@ export default function SessionManager(master: masterRequest) {
         },
       });
     },
+    /**
+     * Resets the session expiration time based on the current time
+     * and the configured `maxAge`.
+     * @default 60 * 60 * 24 (24 hours)
+     */
+    resetExpiration() {
+      const current_data = master.getContext<SessionPluginContext>()?.session;
+      if (!current_data) return;
+      this.setSessionData({
+        meta: {
+          expiresAt:
+            Date.now() +
+            (globalThis.__PLUGIN_SESSION_OPTIONS__.cookieOptions?.maxAge ??
+              60 * 60 * 24) *
+              1000,
+        },
+      });
+    },
+    /**
+     * Retrieves the current session data.
+     */
     getSessionData(): globalThis.SessionData {
       const current_data = master.getContext<SessionPluginContext>().session;
       return current_data;
     },
+    /**
+     * Deletes the current session.
+     */
     deleteSession() {
       master.setContext<Omit<SessionPluginContext, "session">>({
         session_activity: {

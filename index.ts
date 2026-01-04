@@ -3,6 +3,7 @@ import { name, version } from "./package.json";
 import { isDev } from "frame-master/utils";
 import type { CookieOptions, masterRequest } from "frame-master/server/request";
 import { SESSION_COOKIE_NAME, SESSION_DATA_ENDPOINT } from "./src/common";
+import SessionManager from "./src/server";
 
 export type SessionPluginOptions = {
   sessionType:
@@ -43,6 +44,14 @@ export type SessionPluginOptions = {
    * @link https://developer.mozilla.org/en-US/docs/Web/API/URLPattern
    */
   skipForRoutes?: string[];
+  /**
+   * Enable the session for specific routes only.
+   * @default undefined
+   */
+  enableForRoutes?: string[];
+  /**
+   * Options for configuring the session cookie.
+   */
   cookieOptions?: Omit<CookieOptions, "encrypted">;
   /**
    * If true, updates the session expiration time on each activity.
@@ -106,6 +115,14 @@ export default function reactSessionPlugin(
         const pattern = new URLPattern({ pathname: master.URL.pathname });
         if (skipForRoutes.some((route) => pattern.test({ pathname: route })))
           return;
+        else if (
+          options?.enableForRoutes &&
+          !options?.enableForRoutes?.some((route) =>
+            pattern.test({ pathname: route })
+          )
+        ) {
+          return;
+        }
 
         const cookie = master.getCookie<
           Record<"meta" | "client" | "server", unknown> | { id: string }
@@ -155,6 +172,9 @@ export default function reactSessionPlugin(
           master.isResponseSetted()
         )
           return;
+
+        SessionManager(master).resetExpiration();
+
         const { server, ...data } =
           master.getContext<SessionPluginContext>()?.session ?? {};
 

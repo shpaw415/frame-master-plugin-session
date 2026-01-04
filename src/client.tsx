@@ -19,6 +19,7 @@ class SessionManager {
   private serverSessionData: globalThis.SessionDataServer | null = null;
   public metaData: globalThis.SessionData["meta"] | null = null;
   private onChangeCallbacks: Map<string, () => void> = new Map();
+  private expirationTimeout: NodeJS.Timeout | null = null;
 
   private isInited: boolean = false;
 
@@ -69,6 +70,18 @@ class SessionManager {
     }
     this.isInited = true;
     this.onChangeCallbacks.forEach((cb) => cb());
+    this.scheduleExpirationCheck();
+  }
+  private scheduleExpirationCheck() {
+    if (this.expirationTimeout) {
+      clearTimeout(this.expirationTimeout);
+    }
+    if (this.metaData?.expiresAt) {
+      const expiresIn = this.metaData.expiresAt - Date.now();
+      this.expirationTimeout = setTimeout(() => {
+        this.reset();
+      }, expiresIn);
+    }
   }
   /**
    * Resets the session manager, forcing a re-initialization.
