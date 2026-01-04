@@ -46,6 +46,8 @@ export type SessionPluginOptions = {
   skipForRoutes?: string[];
   /**
    * Enable the session for specific routes only.
+   * For example, ['/api/*', '/public/*'].
+   * @link https://developer.mozilla.org/en-US/docs/Web/API/URLPattern
    * @default undefined
    */
   enableForRoutes?: string[];
@@ -113,16 +115,18 @@ export default function reactSessionPlugin(
     router: {
       async before_request(master) {
         const pattern = new URLPattern({ pathname: master.URL.pathname });
-        if (skipForRoutes.some((route) => pattern.test({ pathname: route })))
+        if (SESSION_DATA_ENDPOINT === master.URL.pathname) "OK";
+        else if (
+          skipForRoutes.some((route) => pattern.test({ pathname: route }))
+        )
           return;
         else if (
           options?.enableForRoutes &&
           !options?.enableForRoutes?.some((route) =>
             pattern.test({ pathname: route })
           )
-        ) {
+        )
           return;
-        }
 
         const cookie = master.getCookie<
           Record<"meta" | "client" | "server", unknown> | { id: string }
